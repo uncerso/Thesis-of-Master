@@ -41,6 +41,10 @@
 \ProcessOptions\relax
 \LoadClass[a4paper,\my@fontsize]{\my@baseclass}
 
+\usepackage{tikz}
+\usetikzlibrary{automata,positioning,arrows.meta,calc}
+\tikzset{>={Stealth[width=3mm,length=3mm]}}
+
 % Поля настраиваются командами \newgeometry во время и после генерации титульных 
 % страниц и 
 \usepackage[a4paper]{geometry}
