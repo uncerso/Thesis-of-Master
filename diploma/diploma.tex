@@ -447,7 +447,7 @@
 \subsection{[TODO: fix metrics] Сравнение с основным алгоритмом }
 В данном разделе приводится сравнение двух алгоритмов, представленных в работе. Тестирование проводилось на метагеноме Zymo.
 
-Столбцы на рисунках \ref{fig:indels_ga} и \ref{fig:mismatches_ga}:
+Столбцы на рисунках \ref{fig:indels_mix} и \ref{fig:mismatches_mix}:
 \begin{enumerate}
     \item бактерии, входящие в состав метагенома;
     \item контиги Flye без коррекции;
@@ -458,16 +458,23 @@
 
 \begin{figure}[h]
     \centering
+    \include{tables/mix.general.tex}
+    \caption{general}
+    \label{fig:general_mix}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
     \include{tables/mix.mismatches.tex}
     \caption{Замены}
-    \label{fig:mismatches_ga}
+    \label{fig:mismatches_mix}
 \end{figure}
 
 \begin{figure}[h]
     \centering
     \include{tables/mix.indels.tex}
     \caption{Вставки и удаления}
-    \label{fig:indels_ga}
+    \label{fig:indels_mix}
 \end{figure}
 
 По вставкам и удалениям альтернативный алгоритм местами существенно обходит основной.
@@ -477,20 +484,33 @@
 
 \subsection{[TODO] Симулированные метагеномы}
 \begin{figure}[h]
+    \include{tables/base20.general.tex}
+    \caption{general meow meow}
+    \label{fig:general_base20}
+\end{figure}
+
+\begin{figure}[h]
     \centering
     \include{tables/base20.mismatches.tex}
     \caption{Замены base20}
-    \label{fig:mismatches_base20_onto}
+    \label{fig:mismatches_base20}
 \end{figure}
 
 \begin{figure}[h]
     \centering
     \include{tables/base20.indels.tex}
     \caption{Вставки и удаления base20}
-    \label{fig:indels_base20_onto}
+    \label{fig:indels_base20}
 \end{figure}
 
 \subsection{[TODO] Настоящие метагеномы}
+\begin{figure}[h]
+    \centering
+    \include{tables/bmock12.general.tex}
+    \caption{general}
+    \label{fig:general_bmock12}
+\end{figure}
+
 \begin{figure}[h]
     \centering
     \include{tables/bmock12.mismatches.tex}
@@ -503,6 +523,13 @@
     \include{tables/bmock12.indels.tex}
     \caption{Вставки и удаления}
     \label{fig:indels_bmock12}
+\end{figure}
+
+\begin{figure}[h]
+    \centering
+    \include{tables/zymo.general.tex}
+    \caption{general}
+    \label{fig:general_zymo}
 \end{figure}
 
 \begin{figure}[h]
@@ -554,8 +581,6 @@
 \textbf{Граф сборки} --- в этой работе: граф, полученный в результате упрощения графа де Брюйна.\\
 
 \textbf{К-мер} --- последовательность длины К.\\
-
-%\textbf{Покрывающий путь} --- путь, проходящий через заданное ребро.\\
 
 %\textbf{Плазмиды} --- небольшие молекулы ДНК, физически отделённые от хромосом.\\
 

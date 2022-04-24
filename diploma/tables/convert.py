@@ -9,8 +9,22 @@ def checkValid(table):
     for row in table:
         if len(row) != ncols:
             print("len(row) != ncols, len(row): ", len(row), ", ncols: ", ncols, sep="")
+            print("============[ row ]============")
             print(*row)
+            print("============[ table ]============")
+            print(*table)
             assert(False)
+
+def checkValidRow(table):
+    if len(table) != 1:
+        print("table is not a row; len(table):", len(table))
+        print(table)
+        assert(False)
+    if len(table[0]) <= 1:
+        print("there is no data in the row:")
+        print(table[0])
+        assert(False)
+
 
 def addName(data, name):
     if name.startswith("GCF_"):
@@ -18,9 +32,12 @@ def addName(data, name):
 
     data.append([name.replace("_complete_genome", "")
                      .replace("_draft_genome", "")
-                     .replace("_", "\\_")])
+                     .replace("_", " ")])
 
 def makeColoredValue(value, r, g, b):
+    dotPos = value.find('.')
+    if dotPos != -1 and len(value) - dotPos > 3:
+        value = value[:-1]
     return "\cellcolor[RGB]{" + r + ", " + g + ", " + b + "} " + value
 
 def addValue(data, match):
@@ -30,9 +47,19 @@ def addColoredValue(data, match):
     data[-1].append(makeColoredValue(match[1], match[2], match[3], match[4]))
 
 def readAndParse(filename):
-    otherBlockStarterPatten = """data-original-title="(.*) &lt;span&gt;"""
-    mismatchesBlockStarterPatten = """data-original-title="# mismatches &lt;span&gt;"""
-    indelsBlockStarterPatten = """data-original-title="# indels &lt;span&gt;"""
+    blockStarterHead = "data-original-title=\""
+    blockStarterTail = " &lt;span&gt;"
+
+    otherBlockStarterPatten = blockStarterHead + "(.*)" + blockStarterTail
+
+    mismatchesBlockStarterPatten = blockStarterHead + "# mismatches" + blockStarterTail
+    indelsBlockStarterPatten = blockStarterHead + "# indels" + blockStarterTail
+
+    mismatchesPer100kbpBlockStarterPatten = blockStarterHead + "# mismatches per 100 kbp" + blockStarterTail
+    indelsPer100kbpBlockStarterPatten = blockStarterHead + "# indels per 100 kbp" + blockStarterTail
+    genFracBlockStarterPatten = blockStarterHead + "Genome fraction \(%\)" + blockStarterTail
+    misassembliesBlockStarterPatten = blockStarterHead + "# misassemblies" + blockStarterTail
+
     namePattern = """class="metric-name secondary">(.*)</span>"""
     valuePattern = """<td number="(.+)" style="background: rgb\((.+), (\d+), (\d+)\) none repeat scroll 0% 0%;"""
     headerValuePattern = """<td number="(.+)\""""
@@ -43,6 +70,13 @@ def readAndParse(filename):
 
     mismatches = []
     indels = []
+
+    mismatchesPer100kbp = [["Замены на 100kbp"]]
+    indelsPer100kbp = [["Вставки и удаления на 100kbp"]]
+    misassemblies = [["Структурные ошибки"]]
+    genFrac = [["Покрытие генома"]]
+
+    readOnlyStarterBlock = False
     currentPtr = None
 
     pos = 0
@@ -56,11 +90,37 @@ def readAndParse(filename):
         match = re.search(mismatchesBlockStarterPatten, line)
         if match is not None:
             currentPtr = mismatches
+            readOnlyStarterBlock = False
             continue
 
         match = re.search(indelsBlockStarterPatten, line)
         if match is not None:
             currentPtr = indels
+            readOnlyStarterBlock = False
+            continue
+
+        match = re.search(genFracBlockStarterPatten, line)
+        if match is not None:
+            currentPtr = genFrac
+            readOnlyStarterBlock = True
+            continue
+
+        match = re.search(misassembliesBlockStarterPatten, line)
+        if match is not None:
+            currentPtr = misassemblies
+            readOnlyStarterBlock = True
+            continue
+
+        match = re.search(mismatchesPer100kbpBlockStarterPatten, line)
+        if match is not None:
+            currentPtr = mismatchesPer100kbp
+            readOnlyStarterBlock = True
+            continue
+
+        match = re.search(indelsPer100kbpBlockStarterPatten, line)
+        if match is not None:
+            currentPtr = indelsPer100kbp
+            readOnlyStarterBlock = True
             continue
 
         match = re.search(otherBlockStarterPatten, line)
@@ -73,10 +133,13 @@ def readAndParse(filename):
 
         match = re.search(namePattern, line)
         if match is not None:
-            addName(currentPtr, match[1])
+            if readOnlyStarterBlock:
+                currentPtr = None
+            else:
+                addName(currentPtr, match[1])
             continue
 
-        if len(currentPtr) == 0:
+        if not readOnlyStarterBlock and len(currentPtr) == 0:
             # skip all values within starter blocks
             continue
 
@@ -101,12 +164,20 @@ def readAndParse(filename):
 
     checkValid(mismatches)
     checkValid(indels)
-    return (mismatches, indels)
+    checkValidRow(mismatchesPer100kbp)
+    checkValidRow(indelsPer100kbp)
+    checkValidRow(genFrac)
+    checkValidRow(misassemblies)
+    generalInfo = [genFrac[0], misassemblies[0], mismatchesPer100kbp[0], indelsPer100kbp[0]]
+    checkValid(generalInfo)
+    return mismatches, indels, generalInfo
 
 def printTable(table, file):
     nrows = len(table)
     ncols = len(table[0])
 
+    print("\\begin{adjustbox}{center}", file=file)
+    # print("\\begin{tabularx}{\\textwidth}{|X||" + "c|"*(ncols-1) + "}", sep="", file=file)
     print("\\begin{tabular}{|l||" + "c|"*(ncols-1) + "}", sep="", file=file)
     print("\\hline", file=file)
 
@@ -123,16 +194,18 @@ def printTable(table, file):
         print("\n\\hline", file=file)
 
     print("\\end{tabular}", file=file)
+    print("\\end{adjustbox}", file=file)
 
 def writeToFile(originFile, newSuffix, data):
-    with open(filename.replace(".html", "." + newSuffix + ".tex"), "w") as file:
+    with open(filename + "." + newSuffix + ".tex", "w") as file:
         printTable(data, file)
 
 ### ================================================= ###
 
-filenames = ["base20.html", "bmock12.html", "mix.html", "zymo.html"]
+filenames = ["base20", "bmock12", "mix", "zymo"]
 
 for filename in filenames:
-    mismatches, indels = readAndParse(filename)
+    mismatches, indels, generalInfo = readAndParse(filename + ".html")
     writeToFile(filename, "mismatches", mismatches)
     writeToFile(filename, "indels", indels)
+    writeToFile(filename, "general", generalInfo)

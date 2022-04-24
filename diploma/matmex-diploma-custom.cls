@@ -46,7 +46,8 @@
 \tikzset{>={Stealth[width=3mm,length=3mm]}}
 
 \usepackage{xcolor,colortbl}
-% \usepackage{hhline}
+\usepackage{adjustbox}
+\usepackage{tabularx}
 
 % Поля настраиваются командами \newgeometry во время и после генерации титульных 
 % страниц и 
