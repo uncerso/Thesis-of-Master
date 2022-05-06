@@ -48,6 +48,7 @@
 \usepackage{xcolor,colortbl}
 \usepackage{adjustbox}
 \usepackage{tabularx}
+\newcommand{\white}{\textcolor[rgb]{1, 1, 1}}
 
 % Поля настраиваются командами \newgeometry во время и после генерации титульных 
 % страниц и 

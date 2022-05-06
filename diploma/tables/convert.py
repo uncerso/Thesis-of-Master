@@ -34,19 +34,23 @@ def addName(data, name):
                      .replace("_draft_genome", "")
                      .replace("_", " ")])
 
-def makeColoredValue(value, r, g, b):
+def makeColoredValue(value, r, g, b, makeWhiteTextColor):
     dotPos = value.find('.')
     if dotPos != -1 and len(value) - dotPos > 3:
         value = value[:-1]
+    if makeWhiteTextColor:
+        value = "\white{" + value + "}"
     return "\cellcolor[RGB]{" + r + ", " + g + ", " + b + "} " + value
 
 def addValue(data, match):
-    data[-1].append(makeColoredValue(match[1], "255", "255", "255"))
+    data[-1].append(makeColoredValue(match[1], "255", "255", "255", False))
 
-def addColoredValue(data, match):
-    data[-1].append(makeColoredValue(match[1], match[2], match[3], match[4]))
+def addColoredValue(data, match, makeWhiteTextColor):
+    data[-1].append(makeColoredValue(match[1], match[2], match[3], match[4], makeWhiteTextColor))
 
 def readAndParse(filename):
+    hasWhiteColorPattern = "color: white"
+
     blockStarterHead = "data-original-title=\""
     blockStarterTail = " &lt;span&gt;"
 
@@ -145,7 +149,8 @@ def readAndParse(filename):
 
         match = re.search(valuePattern, line)
         if match is not None:
-            addColoredValue(currentPtr, match)
+            makeWhiteTextColor = re.search(hasWhiteColorPattern, line) is not None
+            addColoredValue(currentPtr, match, makeWhiteTextColor)
             continue
 
         match = re.search(otherValuePattern, line)
@@ -159,7 +164,8 @@ def readAndParse(filename):
             pos += 1
             match = re.search(valuePattern, line)
             if match is not None:
-                addColoredValue(currentPtr, match)
+                makeWhiteTextColor = re.search(hasWhiteColorPattern, line) is not None
+                addColoredValue(currentPtr, match, makeWhiteTextColor)
                 continue
 
     checkValid(mismatches)
@@ -196,10 +202,17 @@ def printTable(table, file):
     print("\\end{tabular}", file=file)
     print("\\end{adjustbox}", file=file)
 
-def writeToFile(originFile, newSuffix, data):
+def writeToFile(originFile, newSuffix, data, useResizebox=False):
     with open(filename + "." + newSuffix + ".tex", "w") as file:
+        if useResizebox:
+            print("\\resizebox{0.8\\columnwidth}{!}{", file=file)
         printTable(data, file)
+        if useResizebox:
+            print("}", file=file)
 
+def dropLastColumn(data):
+    for line in data:
+        line.pop()
 ### ================================================= ###
 
 filenames = ["base20", "bmock12", "mix", "zymo"]
@@ -209,3 +222,10 @@ for filename in filenames:
     writeToFile(filename, "mismatches", mismatches)
     writeToFile(filename, "indels", indels)
     writeToFile(filename, "general", generalInfo)
+    if filename == "mix":
+        dropLastColumn(mismatches)
+        dropLastColumn(indels)
+        writeToFile(filename, "mismatches_for_preso", mismatches)
+        writeToFile(filename, "indels_for_preso", indels)
+    else:
+        writeToFile(filename, "general_for_preso", generalInfo, True)
