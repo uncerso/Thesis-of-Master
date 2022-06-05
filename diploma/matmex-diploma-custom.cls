@@ -200,7 +200,7 @@
     {\ifthenelse{\equal{\my@title@type@ru}{diploma}}
     {Дипломная работа}
     {\ifthenelse{\equal{\my@title@type@ru}{master}}
-    {Магистерская диссертация}
+    {Выпускная квалификационная работа магистра}
     {\ifthenelse{\equal{\my@title@type@ru}{bachelor}}
     {Бакалаврская работа}
     }}}

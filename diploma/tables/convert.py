@@ -178,19 +178,24 @@ def readAndParse(filename):
     checkValid(generalInfo)
     return mismatches, indels, generalInfo
 
-def printTable(table, file):
-    nrows = len(table)
-    ncols = len(table[0])
 
-    print("\\begin{adjustbox}{center}", file=file)
-    # print("\\begin{tabularx}{\\textwidth}{|X||" + "c|"*(ncols-1) + "}", sep="", file=file)
-    print("\\begin{tabular}{|l||" + "c|"*(ncols-1) + "}", sep="", file=file)
-    print("\\hline", file=file)
-
+def printHeaderAsDigits(table, file):
     print("&", " & ".join([str(i) for i in range(1, ncols)]), "\\\\", file=file)
 
-    print("\\hline", file=file)
-    print("\\hline", file=file)
+def printNamedHeader(table, file):
+    ncols = len(table[0])
+
+    if ncols <= 5:
+        labels = [["", "flye", "we", "mixed", "best"][:ncols]]
+    else:
+        labels = [["", "raw",  "ratatosk", "ratatosk", "our",      "ratatosk", "ratatosk"],
+                  ["", "flye", "contigs",  "reads",    "contigs",  "and we",   "ratatosk"]]
+
+    for labelRow in labels:
+        print(" & ".join(labelRow), "\\\\", file=file)
+
+def printContent(table, file):
+    ncols = len(table[0])
 
     for row in table:
         assert(len(row) == ncols)
@@ -199,14 +204,33 @@ def printTable(table, file):
             print(row[i], end=endSep, file=file)
         print("\n\\hline", file=file)
 
+def printTable(table, headerPrinter, file):
+    ncols = len(table[0])
+
+    print("\\begin{minipage}{0.91\\textwidth}", file=file)
+    print("\\begin{adjustbox}{center}", file=file)
+    print("\\begin{tabular}{|l||" + "c|"*(ncols-1) + "}", sep="", file=file)
+    # print("\\begin{tabularx}{\\textwidth}{|X||" + "c|"*(ncols-1) + "}", sep="", file=file)
+
+    print("\\hline", file=file)
+
+    headerPrinter(table, file)
+
+    print("\\hline", file=file)
+    print("\\hline", file=file)
+
+    printContent(table, file)
+
     print("\\end{tabular}", file=file)
     print("\\end{adjustbox}", file=file)
+    print("\\end{minipage}", file=file)
+
 
 def writeToFile(originFile, newSuffix, data, useResizebox=False):
     with open(filename + "." + newSuffix + ".tex", "w") as file:
         if useResizebox:
             print("\\resizebox{0.8\\columnwidth}{!}{", file=file)
-        printTable(data, file)
+        printTable(data, printNamedHeader, file)
         if useResizebox:
             print("}", file=file)
 
